@@ -1,4 +1,7 @@
 build/
+build-*/
+bin/
+build_cli/
 
 # VS project and working files
 *.vcxproj.user
