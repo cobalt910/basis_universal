@@ -1,3 +1,6 @@
+<!-- Copyright 2016-2026 Binomial LLC -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # basis_universal v2.1
 An LDR/HDR portable GPU supercompressed texture transcoding system. 
 
@@ -39,8 +42,8 @@ Links
 
 - [Wiki/Specifications](https://github.com/BinomialLLC/basis_universal/wiki)
 - [Release Notes](https://github.com/BinomialLLC/basis_universal/wiki/Release-Notes)
-- [Live Compression/Transcoding Testbed](https://subquantumtech.com/xu/ktx2_encode_test/) - A WASM64 compatible browser is recommended (such as Chrome/Edge/Firefox), especially for XUASTC LDR compression, but it works under plain WASM too (with resolution limits due to less available memory).
-- [Live WebGL Examples](https://subquantumtech.com/xu/)
+- [Live Compression/Transcoding Testbed](https://binomial.biz/ktx2_encode_test/) - A WASM64 compatible browser is recommended (such as Chrome/Edge/Firefox), especially for XUASTC LDR compression, but it works under plain WASM too (with resolution limits due to less available memory).
+- [Live WebGL Examples](https://binomial.biz/)
 - [JavaScript API/WASM/WebGL info](https://github.com/BinomialLLC/basis_universal/tree/master/webgl)
 - [XUASTC LDR Specification](https://github.com/BinomialLLC/basis_universal/wiki/XUASTC-LDR-Specification-v1.0)
 
@@ -113,6 +116,9 @@ Supports adaptive deblocking when transcoding from larger block sizes; this can 
 One interesting use of XUASTC LDR which works with any of the 14 block sizes: the efficient distribution of texture content compressed to very low bitrates vs. older systems, resulting in game-changing download time reductions. Using the larger XUASTC block sizes (beyond 6x6) with Weight Grid DCT and adaptive deblocking on either the CPU or [GPU using a simple shader](https://github.com/BinomialLLC/basis_universal/tree/master/shader_deblocking), **any developer can now distribute texture and image content destined for BC7 at .35-1.5 bpp**, and **cache the transcoded BC7 data on a modern Gen 4 or 5 (10+ GB/sec.) SSD**.
 
 XUASTC LDR supports the following ASTC configurations: L/LA/RGB/RGBA CEMs; base+scale or RGB/RGBA direct; base+offset CEMs; Blue Contraction encoding; 1–3 subsets; all partition patterns; and single- or dual-plane modes. Here is the [XUASTC LDR specification](https://github.com/BinomialLLC/basis_universal/wiki/XUASTC-LDR-Specification-v1.0). Also see the [ASTC and XUASTC LDR Usage Guide](https://github.com/BinomialLLC/basis_universal/wiki/ASTC-and-XUASTC-LDR-Usage-Guide).
+
+Here's a XUASTC LDR 4x4 (arithmetic vs. Zstd profile) bit rate vs. distortion graph across 151 test textures/images (the same test corpus we used to create [bc7e.ispc](https://github.com/richgel999/bc7enc_rdo)). Distortion was measured using [PSNR-HVS-M](https://pypi.org/project/psnr-hvsm/). Another R-D graph created at effort 9 for various block sizes is in our wiki [here](https://github.com/BinomialLLC/basis_universal/wiki/JPEG-for-ASTC#rate-vs-distortion-graph-at-various-block-sizes).
+<img width="1284" height="760" alt="image" src="https://github.com/user-attachments/assets/60f56279-3efd-4ec9-b866-a456e6fa9735" />
 
 Notes:  
 - Mode #1 (ETC1S) has special support and optimizations for basic temporal supercompression ([texture video](https://github.com/BinomialLLC/basis_universal/wiki/Encoding-ETC1S-and-XUASTC-LDR-Texture-Video)).
@@ -439,7 +445,7 @@ Hello from basisu_wasm_api.cpp version 200
 WebGL Examples
 --------------
 
-The 'WebGL' directory contains several simple WebGL demos that use the transcoder and compressor compiled to [WASM](https://webassembly.org/) with [Emscripten](https://emscripten.org/). These demos are online [here](https://subquantumtech.com/xu/). See more details in the readme file [here](webgl/README.md).
+The 'WebGL' directory contains several simple WebGL demos that use the transcoder and compressor compiled to [WASM](https://webassembly.org/) with [Emscripten](https://emscripten.org/). These demos are online [here](https://binomial.biz/). See more details in the readme file [here](webgl/README.md).
 
 ![Screenshot of 'texture' example running in a browser.](webgl/texture_test/preview.png)
 ![Screenshot of 'gltf' example running in a browser.](webgl/gltf/preview.png)
@@ -468,7 +474,7 @@ emcmake cmake ..
 make
 ```
 
-There are several simple encoding/transcoding web demos, located in `webgl/ktx2_encode_test` and `webgl/texture_test`, that show how to use the encoder's and transcoder's JavaScript wrapper APIs. They are [live on the web here](https://subquantumtech.com/xu/).
+There are several simple encoding/transcoding web demos, located in `webgl/ktx2_encode_test` and `webgl/texture_test`, that show how to use the encoder's and transcoder's JavaScript wrapper APIs. They are [live on the web here](https://binomial.biz/).
 
 ----
 
@@ -516,21 +522,30 @@ Repository Licensing with REUSE
 The repository has been updated to be compliant with the REUSE license
 checking tool (https://reuse.software/). See the [.reuse](https://github.com/BinomialLLC/basis_universal/tree/master/.reuse) subdirectory.
 
-External Tool Links
--------------------
+External Links
+--------------
 
 - [btx - KTX2 Command Line Tool](https://github.com/BinomialLLC/KTX-Software-Binomial-Fork) - Our fork of KTX-Software with bug fixes, working HDR quality/effort controls, new options, and new codec integrations. This tool can validate, extract, and compress KTX2 files compatible with our project.
 - [ARM's astcenc](https://github.com/ARM-software/astc-encoder) - Crucial official tool from ARM which can unpack ASTC format LDR/HDR .astc and .ktx files to .png or .exr for testing and verification purposes.
-- [Online .EXR and .HDR Image File Viewer](https://viewer.openhdr.org/) - With strong tone mapping, auto-exposure, HDR histogram.
-- [Windows HDR + WCG Image Viewer](https://13thsymphony.github.io/hdrimageviewer/) - A true HDR image viewer for Windows which works on HDR monitors. Also see [the github repo](https://github.com/13thsymphony/HDRImageViewer).
-- [AMD Compressonator](https://gpuopen.com/compressonator/) - .DDS viewer, can view .KTX files in some formats.
-- [PVRTexTool](https://www.imgtec.com/developers/powervr-sdk-tools/pvrtextool/) - Can view .ASTC and .KTX files in some formats. (Note: .DDS viewer seems busted for BC1, doesn't support BC7 at all.)
-- [Microsoft's DirectXTex](https://github.com/microsoft/DirectXTex) - Samples contain a basic .DDS viewer. (Note: May still have issues loading .DDS files with texture dimensions that aren't divisible by 4 texels.)
-- [RenderDoc](https://renderdoc.org/) - Reliable viewer for LDR/HDR .DDS files in BC1-7 formats.
+- [Online .EXR and .HDR Image File Viewer](https://viewer.openhdr.org/) - OpenHDR Viewer. Has a very well implemented tone mapper, auto-exposure, and HDR histogram.
+- [RenderDoc](https://renderdoc.org/) - Reliable viewer for LDR/HDR .DDS files in BC1-7 formats. Open the .PNG/.EXR/.DDS file, then select Window->Texture Viewer. Supports mipmaps, texture arrays, cubemaps, basic exposure controls.
 - [Paint.NET](https://www.getpaint.net/) - Windows app: built-in [.DDS file loading](https://github.com/0xC0000054/pdn-ddsfiletype-plus), supports BC1-7 and [cubemaps](https://github.com/0xC0000054/pdn-ddsfiletype-plus/wiki/Cube-Maps)
+- [dds-ktx](https://github.com/septag/dds-ktx): Simple .DDS/.KTX viewer with mipmap support. (Note: Crashes on compressed textures not divisible by 4 texels on each dimension, which is a [Direct3D specific limitation](https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression).)
+- [AMD Compressonator](https://gpuopen.com/compressonator/) - .DDS viewer, can view .KTX files in some formats.
+- [PVRTexTool](https://www.imgtec.com/developers/powervr-sdk-tools/pvrtextool/) - Can view .ASTC and .KTX files in some formats that AMD Compressonator won't view. (Note: .DDS viewer seems busted for BC1, doesn't support BC7 at all.)
+- [Microsoft's DirectXTex](https://github.com/microsoft/DirectXTex) - Samples contain a basic .DDS viewer. (Note: May still have issues loading .DDS files with texture dimensions that aren't divisible by 4 texels.)
+- [Windows HDR + WCG Image Viewer](https://13thsymphony.github.io/hdrimageviewer/) - A true HDR image viewer for Windows which works on HDR monitors. Also see [the github repo](https://github.com/13thsymphony/HDRImageViewer).
 - [Mali Texture Compression Tool](https://community.arm.com/support-forums/f/graphics-gaming-and-vr-forum/52390/announcement-mali-texture-compression-tool-end-of-life) - Now deprecated.
-
+- [Our GitHub wiki content statically mirrored as HTML](https://subquantumtech.com/basisu_wiki/Home.html), which lags behind the [live GitHub wiki](https://github.com/BinomialLLC/basis_universal/wiki)
+ 
 For more useful links, papers, and tools/libraries, see the end of the [UASTC HDR 4x4 texture specification](https://github.com/BinomialLLC/basis_universal/wiki/UASTC-HDR-4x4-Texture-Specification#papersfurther-reading).
+
+----
+
+Security Note
+-------------
+
+The Basis Universal codecs integrated into this repo fall under Binomial's responsibility for security reports and fixes. See the GitHub Security tab above, or the file [SECURITY.md](SECURITY.md) for reporting information.
 
 ----
 

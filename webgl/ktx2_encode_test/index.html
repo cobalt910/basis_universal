@@ -1084,6 +1084,7 @@
    function resetDrawSettings()
    {
       drawMode = 0;
+      updateViewModeButtons();
 
       linearToSRGBFlag = false;
       elem('linear_to_srgb').innerText = linearToSRGBFlag ? 'Enabled' : 'Disabled';
@@ -1548,9 +1549,18 @@
       }
    }
 
-   function alphaBlend() { drawMode = 0; redraw(); }
-   function viewRGB() { drawMode = 1; redraw(); }
-   function viewAlpha() { drawMode = 2; redraw(); }
+   function updateViewModeButtons()
+   {
+      var ids = ['btn-alpha-blend', 'btn-view-rgb', 'btn-view-alpha', 'btn-view-r', 'btn-view-g', 'btn-view-b'];
+      for (var i = 0; i < ids.length; i++)
+         elem(ids[i]).classList.toggle('active-btn', i === drawMode);
+   }
+   function alphaBlend() { drawMode = 0; updateViewModeButtons(); redraw(); }
+   function viewRGB() { drawMode = 1; updateViewModeButtons(); redraw(); }
+   function viewAlpha() { drawMode = 2; updateViewModeButtons(); redraw(); }
+   function viewR() { drawMode = 3; updateViewModeButtons(); redraw(); }
+   function viewG() { drawMode = 4; updateViewModeButtons(); redraw(); }
+   function viewB() { drawMode = 5; updateViewModeButtons(); redraw(); }
 
    function BC7ChromaFilterClicked()
    {
@@ -1801,6 +1811,49 @@
       }
    }
 
+   function saveFramebufferAsPNG()
+   {
+      if (!width || !displayWidth || !displayHeight)
+         return;
+
+      // Ensure the canvas contents are fresh.
+      redraw();
+
+      var canvas = elem('canvas');
+      var gl = canvas.getContext('webgl');
+
+      // Read the framebuffer. WebGL readPixels returns rows bottom-to-top.
+      var pixels = new Uint8Array(displayWidth * displayHeight * 4);
+      gl.readPixels(0, 0, displayWidth, displayHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+      // Flip vertically into a temporary canvas via putImageData.
+      var tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = displayWidth;
+      tmpCanvas.height = displayHeight;
+      var ctx = tmpCanvas.getContext('2d');
+      var imageData = ctx.createImageData(displayWidth, displayHeight);
+
+      for (var y = 0; y < displayHeight; y++)
+      {
+         var srcRow = (displayHeight - 1 - y) * displayWidth * 4;
+         var dstRow = y * displayWidth * 4;
+         imageData.data.set(pixels.subarray(srcRow, srcRow + displayWidth * 4), dstRow);
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      // Convert to PNG blob and trigger download.
+      tmpCanvas.toBlob(function(blob) {
+         var url = URL.createObjectURL(blob);
+         var a = document.createElement('a');
+         a.href = url;
+         a.download = 'framebuffer.png';
+         document.body.appendChild(a);
+         a.click();
+         document.body.removeChild(a);
+         URL.revokeObjectURL(url);
+      }, 'image/png');
+   }
    function disabledFormatsChanged()
    {
       updateSupportedFormats();
@@ -2188,6 +2241,7 @@
    function globalInit()
    {
       elem('SRGB').checked = true;
+      updateViewModeButtons();
 
       var gl = elem('canvas').getContext('webgl');
       checkForGPUFormatSupport(gl);
@@ -2330,6 +2384,16 @@
     min-width: 0;
     overflow: auto;
     max-height: calc(100vh - 24px); /* 24px = 12px top + 12px bottom padding in .wrap */
+    cursor: grab;
+  }
+  .viewer.dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+  .active-btn {
+    background-color: #4a90d9;
+    color: white;
+    border-style: inset;
   }
 
   /* IMPORTANT: do NOT scale the canvas with CSS; let JS size it 1:1 */
@@ -2371,7 +2435,7 @@
 
     <br>
     <div style="font-size: 24pt; font-weight: bold">
-    Basis Universal .KTX2 Supercompressed GPU Texture Encoding/Transcoding Testbed v2.15
+    Basis Universal .KTX2 Supercompressed GPU Texture Encoding/Transcoding Testbed v2.19
     </div>
 
     <br>This simple demo uses the <a href="https://github.com/BinomialLLC/basis_universal/">Basis Universal</a> C++ transcoder (compiled to WebAssembly using Emscripten) to transcode a .ktx2 file to:
@@ -2381,7 +2445,7 @@
     Thanks to Evan Parker for providing <a href="https://github.com/toji/webgl-texture-utils">webgl-texture-utils</a> and this test bed. <a href="../index.html">Go back.</a>
     Notes: Enable your browser debug console (F12 on Chrome/Firefox) to see debug output.
     The largest image resolution that can be compressed in the browser with
-    this library is limited to either 12 megapixels or 4 megapixels (depending on format and WASM64/WASM32) to avoid running out of WASM memory.
+    this library is limited to either 16 megapixels or 4 megapixels (depending on format and WASM64/WASM32) to avoid running out of WASM memory.
 
     <br><br>
     <div id="supported-formats">
@@ -2478,6 +2542,7 @@
     <br>
 
     <input type="button" value="Download Encoded .KTX2 File" onclick="downloadEncodedFile()">
+    <input type="button" value="Save Framebuffer as .PNG" onclick="saveFramebufferAsPNG()">
 
     <hr style="width: 40%; margin: 10px 0; background-color: #ccc; border: none; height: 1px;">
     
@@ -2559,9 +2624,12 @@
     <b>Display/Visualization Options:</b>
     <br>
     
-    <input type="button" value="Alpha blend" onclick="alphaBlend()"></input>
-    <input type="button" value="View RGB" onclick="viewRGB()"></input>
-    <input type="button" value="View Alpha" onclick="viewAlpha()"></input>
+    <input type="button" id="btn-alpha-blend" value="Alpha blend" onclick="alphaBlend()"></input>
+    <input type="button" id="btn-view-rgb" value="View RGB" onclick="viewRGB()"></input>
+    <input type="button" id="btn-view-alpha" value="View Alpha" onclick="viewAlpha()"></input>
+    <input type="button" id="btn-view-r" value="View R" onclick="viewR()"></input>
+    <input type="button" id="btn-view-g" value="View G" onclick="viewG()"></input>
+    <input type="button" id="btn-view-b" value="View B" onclick="viewB()"></input>
 
     <br>
 
@@ -3053,6 +3121,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 
+<script>
+// Drag-to-scroll: hold left mouse button and drag to pan the texture view.
+document.addEventListener('DOMContentLoaded', () => {
+  const viewer = document.querySelector('.viewer');
+  let isDragging = false;
+  let startX, startY, scrollLeftStart, scrollTopStart;
+  viewer.addEventListener('mousedown', e => {
+    // Only left button
+    if (e.button !== 0) return;
+    isDragging = true;
+    viewer.classList.add('dragging');
+    startX = e.clientX;
+    startY = e.clientY;
+    scrollLeftStart = viewer.scrollLeft;
+    scrollTopStart = viewer.scrollTop;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    viewer.scrollLeft = scrollLeftStart - (e.clientX - startX);
+    viewer.scrollTop  = scrollTopStart  - (e.clientY - startY);
+  });
+  window.addEventListener('mouseup', e => {
+    if (!isDragging) return;
+    isDragging = false;
+    viewer.classList.remove('dragging');
+  });
+  // Wheel-to-zoom: scroll wheel zooms in/out, preserving the point under the cursor.
+  viewer.addEventListener('wheel', e => {
+    e.preventDefault();
+    const slider = document.getElementById('display-zoom-slider');
+    if (!slider) return;
+
+    const oldSliderVal = parseInt(slider.value, 10);
+    const newSliderVal = e.deltaY < 0
+      ? Math.min(oldSliderVal + 1, parseInt(slider.max, 10))
+      : Math.max(oldSliderVal - 1, parseInt(slider.min, 10));
+
+    if (newSliderVal === oldSliderVal) return;
+
+    const oldZoom = (oldSliderVal === 0) ? 0.5 : oldSliderVal;
+    const newZoom = (newSliderVal === 0) ? 0.5 : newSliderVal;
+
+    // Mouse position relative to the viewer's top-left corner.
+    const rect = viewer.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // The texture-space coordinate currently under the cursor.
+    const texX = (viewer.scrollLeft + mouseX) / oldZoom;
+    const texY = (viewer.scrollTop  + mouseY) / oldZoom;
+
+    // Apply the zoom through the existing slider/function so all state stays in sync.
+    slider.value = newSliderVal;
+    updateDisplayZoom(newSliderVal);
+
+    // Adjust scroll so the same texture-space point remains under the cursor.
+    viewer.scrollLeft = texX * newZoom - mouseX;
+    viewer.scrollTop  = texY * newZoom - mouseY;
+
+  }, { passive: false });
+});
+</script>
 </body>
 
 </html>
