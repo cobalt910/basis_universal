@@ -1,34 +1,41 @@
 <!-- Copyright 2016-2026 Binomial LLC -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# basis_universal v2.1
+# basis_universal v2.5
 An LDR/HDR portable GPU supercompressed texture transcoding system. 
 
 [![Build status](https://img.shields.io/appveyor/build/BinomialLLC/basis-universal/master.svg)](https://ci.appveyor.com/project/BinomialLLC/basis-universal)
+
+*Note: v2.50 has just been merged into the repo, but the documentation work for this release is still ongoing.*
 
 ----
 
 Intro
 -----
 
-Basis Universal™ v2.1 is an open source [supercompressed](http://gamma.cs.unc.edu/GST/gst.pdf) LDR/HDR GPU compressed texture interchange system from Binomial LLC that supports two intermediate file formats: the [.KTX2 open standard from the Khronos Group](https://registry.khronos.org/KTX/specs/2.0/ktxspec.v2.html), and our own ".basis" file format. These file formats support rapid transcoding to virtually any compressed [GPU texture format](https://grokipedia.com/page/texture_compression) released over the past quarter century. 
+Basis Universal™ v2.5 is an open source [supercompressed](http://gamma.cs.unc.edu/GST/gst.pdf) LDR/HDR GPU compressed texture interchange system from Binomial LLC that supports two intermediate file formats: the [.KTX2 open standard from the Khronos Group](https://registry.khronos.org/KTX/specs/2.0/ktxspec.v2.html), and our own ".basis" file format. These file formats support rapid transcoding to virtually any compressed [GPU texture format](https://grokipedia.com/page/texture_compression) released over the past quarter century. 
 
 ## GPU Textures are Infrastructure
 
-Our overall goal is to simplify the encoding and efficient distribution of *portable* LDR and HDR GPU texture, image, and short [texture video](https://github.com/BinomialLLC/basis_universal/wiki/Encoding-ETC1S-and-XUASTC-LDR-Texture-Video) content in a way that is compatible with any GPU or rendering/graphics API. 
+Our overall goal is to simplify the encoding and efficient distribution of *portable* LDR and HDR GPU texture, image, and short animated [texture video](https://github.com/BinomialLLC/basis_universal/wiki/Encoding-ETC1S-and-XUASTC-LDR-Texture-Video) content in a way that is compatible with any GPU or rendering/graphics API. 
 
-The system supports seven modes (or codecs). In the order they were implemented:
+The system supports eight modes (or codecs). In the order they were implemented:
 1. **ETC1S**: A supercompressed subset of ETC1 designed for very fast transcoding to other LDR texture formats, low/medium quality but high compression, slightly faster transcoding to other LDR texture formats vs. libjpeg.
 2. **UASTC LDR 4x4 (with or without RDO)**: Custom ASTC 4x4-like format designed for very fast transcoding to other LDR texture formats, high quality
 3. **UASTC HDR 4x4**: Standard ASTC HDR 4x4 texture data, but constrained for very fast transcoding to BC6H
 4. **ASTC HDR 6x6 (with or without RDO)**: Standard ASTC HDR 6x6
 5. **UASTC HDR 6x6 Intermediate ("GPU Photo HDR")**: Supercompressed ASTC HDR 6x6
 6. **ASTC LDR 4x4-12x12 (all 14 standard ASTC block sizes, with or without basic windowed RDO)**: Standard ASTC LDR 4x4-12x12
-7. **XUASTC LDR 4x4-12x12 (all 14 standard ASTC block sizes, "GPU Photo LDR/SDR")**: Latent-space supercompressed ASTC LDR with Weight Grid DCT ([Discrete Cosine Transform](https://grokipedia.com/page/Discrete_cosine_transform)) for very high quality, extreme bitrate scalability, optional adaptive deblocking (CPU or using a [simple GPU pixel shader](https://github.com/BinomialLLC/basis_universal/tree/master/shader_deblocking) compatible with mipmapping and filtering), three entropy coding profiles (Zstd, arithmetic or hybrid). See [JPEG for ASTC](https://github.com/BinomialLLC/basis_universal/wiki/JPEG-for-ASTC), and the [ASTC and XUASTC LDR Usage Guide](https://github.com/BinomialLLC/basis_universal/wiki/ASTC-and-XUASTC-LDR-Usage-Guide).
+7. **XUASTC LDR 4x4-12x12 (all 14 standard ASTC block sizes, "GPU Photo LDR/SDR")**: Latent-space supercompressed ASTC LDR with Weight Grid DCT ([Discrete Cosine Transform](https://grokipedia.com/page/Discrete_cosine_transform)) for very high quality, extreme bitrate scalability, optional adaptive deblocking (CPU or using a [simple GPU pixel shader](https://github.com/BinomialLLC/basis_universal/tree/master/shader_deblocking_glfw) compatible with mipmapping and filtering), three entropy coding profiles (Zstd, arithmetic or hybrid). See [JPEG for ASTC](https://github.com/BinomialLLC/basis_universal/wiki/JPEG-for-ASTC), and the [ASTC and XUASTC LDR Usage Guide](https://github.com/BinomialLLC/basis_universal/wiki/ASTC-and-XUASTC-LDR-Usage-Guide). As of v2.50 the XUASTC/ASTC encoders now support in-loop deblocking via a global optimization step (using Stochastic Coordinate Descent/SCD). An optional deblocking pixel shader can be used to reduce block artifacts on the largest ASTC/XUASTC block sizes (10x8 or larger by default). The encoder can now optimize the output taking into account the deblocking filter.
+8. **XUBC7**: Lossless or lossy supercompressed standard BC7 (all modes, all mode features, all 2/3 subset partition patterns). Supports near-loss transcoding to ASTC LDR 4x4 and real-time encoding to numerous other LDR texture formats: ETC1/2, PVRTC1, etc. Uses residual weight grid DPCM and (in lossy mode) absolute+residual Weight Grid DCT. Also supports optional RDO (rate-distortion optimization). Lossless bitrate is ~3.5-5.6 bpp, lossy is ~0.8-3.5 bpp, with the lossy sweet spot being around 1.15-2.5 bpp. XUBC7 decompression is fully fixed-point, and the low-level format supports multithreaded transcoding (up to 8 threads). Always uses Zstd.
 
-The C/C++ encoder and transcoder libraries can be compiled to native code or WebAssembly (web or WASI), and all encoder/transcoder features can be accessed from JavaScript via a C++ wrapper library which optionally supports [WASM multithreading](https://web.dev/articles/webassembly-threads) for fast encoding in the browser. [WASM WASI](https://wasi.dev/) builds, for the command line tool and the encoder/transcoder as a WASI module using a pure C API, are also supported. 
+The C/C++ encoder and transcoder libraries can be compiled to native code or WebAssembly (web or WASI), and all encoder/transcoder features can be accessed from JavaScript via a C++ wrapper library which optionally supports [WASM multithreading](https://web.dev/articles/webassembly-threads) for fast encoding in the browser. [WASM WASI](https://wasi.dev/) builds, for the command line tool and the encoder/transcoder as a WASI module using a pure C API, are also supported.
 
 Full Python support for encoding/transcoding is now available, supporting native or WASM modules, but is still in the early stages of development.
+
+## DDS Transcoding Support
+
+The transcoder module (in v2.5) now fully supports reading and transcoding LDR .DDS files in a variety of formats (BC1-7 and numerous 1/2/3/4 channel uncompressed formats). It supports DX9 and DX10 format files, cubemaps, texture arrays, mipmaps, etc. The .DDS transcoder supports near-lossless transcoding to ASTC LDR 4x4, and real-time encoding to ETC1/2, PVRTC1, etc. This new feature for v2.5 permits standard .DDS files to be easily deployed to any GPU device/API/etc. The encoder library, command line tool, and UI tool can also create .DDS files in a variety of formats, and for development/testing .KTX2 files can be exported to .DDS files.
 
 License/Legal
 -------------
@@ -42,8 +49,8 @@ Links
 
 - [Wiki/Specifications](https://github.com/BinomialLLC/basis_universal/wiki)
 - [Release Notes](https://github.com/BinomialLLC/basis_universal/wiki/Release-Notes)
-- [Live Compression/Transcoding Testbed](https://binomial.biz/ktx2_encode_test/) - A WASM64 compatible browser is recommended (such as Chrome/Edge/Firefox), especially for XUASTC LDR compression, but it works under plain WASM too (with resolution limits due to less available memory).
-- [Live WebGL Examples](https://binomial.biz/)
+- [Live Compression/Transcoding Tool: .KTX2/.DDS Studio v2.50](https://binomial.biz/ktx2_studio/) - A WASM64 compatible browser is recommended (such as Chrome/Edge/Firefox), especially for XUASTC LDR compression, but it works under plain WASM too (with resolution limits due to less available memory).
+- [Live WebGL Examples](https://binomial.biz/). Note the previous v2.1 examples are [here](https://subquantumtech.com/xu/).
 - [JavaScript API/WASM/WebGL info](https://github.com/BinomialLLC/basis_universal/tree/master/webgl)
 - [XUASTC LDR Specification](https://github.com/BinomialLLC/basis_universal/wiki/XUASTC-LDR-Specification-v1.0)
 
@@ -113,12 +120,14 @@ Weight Grid DCT can be disabled; however, supercompression remains available wit
 
 Supports adaptive deblocking when transcoding from larger block sizes; this can be disabled using a transcoder flag.
 
-One interesting use of XUASTC LDR which works with any of the 14 block sizes: the efficient distribution of texture content compressed to very low bitrates vs. older systems, resulting in game-changing download time reductions. Using the larger XUASTC block sizes (beyond 6x6) with Weight Grid DCT and adaptive deblocking on either the CPU or [GPU using a simple shader](https://github.com/BinomialLLC/basis_universal/tree/master/shader_deblocking), **any developer can now distribute texture and image content destined for BC7 at .35-1.5 bpp**, and **cache the transcoded BC7 data on a modern Gen 4 or 5 (10+ GB/sec.) SSD**.
+One interesting use of XUASTC LDR which works with any of the 14 block sizes: the efficient distribution of texture content compressed to very low bitrates vs. older systems, resulting in game-changing download time reductions. Using the larger XUASTC block sizes (beyond 6x6) with Weight Grid DCT and adaptive deblocking on either the CPU or [GPU using a simple shader](https://github.com/BinomialLLC/basis_universal/tree/master/shader_deblocking_glfw), **any developer can now distribute texture and image content destined for BC7 at .35-1.5 bpp**, and **cache the transcoded BC7 data on a modern Gen 4 or 5 (10+ GB/sec.) SSD**.
 
 XUASTC LDR supports the following ASTC configurations: L/LA/RGB/RGBA CEMs; base+scale or RGB/RGBA direct; base+offset CEMs; Blue Contraction encoding; 1–3 subsets; all partition patterns; and single- or dual-plane modes. Here is the [XUASTC LDR specification](https://github.com/BinomialLLC/basis_universal/wiki/XUASTC-LDR-Specification-v1.0). Also see the [ASTC and XUASTC LDR Usage Guide](https://github.com/BinomialLLC/basis_universal/wiki/ASTC-and-XUASTC-LDR-Usage-Guide).
 
 Here's a XUASTC LDR 4x4 (arithmetic vs. Zstd profile) bit rate vs. distortion graph across 151 test textures/images (the same test corpus we used to create [bc7e.ispc](https://github.com/richgel999/bc7enc_rdo)). Distortion was measured using [PSNR-HVS-M](https://pypi.org/project/psnr-hvsm/). Another R-D graph created at effort 9 for various block sizes is in our wiki [here](https://github.com/BinomialLLC/basis_universal/wiki/JPEG-for-ASTC#rate-vs-distortion-graph-at-various-block-sizes).
 <img width="1284" height="760" alt="image" src="https://github.com/user-attachments/assets/60f56279-3efd-4ec9-b866-a456e6fa9735" />
+
+8. **XUBC7**: Supercompressed BC7 with absolute and residual **Weight Grid DCT** and residual weight grid DPCM.
 
 Notes:  
 - Mode #1 (ETC1S) has special support and optimizations for basic temporal supercompression ([texture video](https://github.com/BinomialLLC/basis_universal/wiki/Encoding-ETC1S-and-XUASTC-LDR-Texture-Video)).
@@ -279,7 +288,6 @@ More XUASTC LDR specific options (many of these also apply to standard ASTC - se
   - `-higher_quality_transcoding`: Permits slower but higher quality transcoding
   - `-no_deblocking`: Disables adaptive deblocking on ASTC block sizes > 8x6 (faster)
   - `-force_deblocking`: Always use adaptive deblocking filter, even for block sizes <= 8x6 (slower)
-  - `-stronger_deblocking`: Use stronger deblocking when it's enabled (same performance)
   - `-fast_xuastc_ldr_bc7_transcoding` and `-no_fast_xuastc_ldr_bc7_transcoding`: Controls faster direct XUASTC->BC7 transcoding (defaults to enabled, which is slightly lower quality)
 
 - To compress an LDR sRGB image to a standard ASTC LDR 6x6 .KTX2 file, using effort level 4 (valid effort levels 0-10):
@@ -401,7 +409,7 @@ The written mipmapped, cubemap, or texture array .KTX/.DDS files will be in a wi
 Pixel Shader Deblocking Sample: CPU + GPU Deblocking Everywhere
 ---------------------------------------------------------------
 
-The [shader_deblocking sample](https://github.com/BinomialLLC/basis_universal/blob/master/shader_deblocking/README.md) in the repo demonstrates how to use a simple pixel shader to deblock sampled textures of any block size between 4x4-12x12, greatly reducing block artifacts. The sample shader is compatible with mipmapping and bilinear or trilinear filtering. Ultimately, shader deblocking enables the usage of larger ASTC block sizes, reducing bitrate and increasing transcoding speeds. Deblocking is a standard feature of modern image and video codecs, and there's no reason why it can't be used while sampling (or transcoding) GPU textures. Using larger ASTC block sizes can significantly reduce GPU memory bandwidth. If bandwidth is the bottleneck — as it often is — the modest ALU and texture sampling cost of deblocking can be effectively free.
+The [shader_deblocking sample](https://github.com/BinomialLLC/basis_universal/blob/master/shader_deblocking_glfw/README.md) in the repo demonstrates how to use a simple pixel shader to deblock sampled textures of any block size between 4x4-12x12, greatly reducing block artifacts. The sample shader is compatible with mipmapping and bilinear or trilinear filtering. Ultimately, shader deblocking enables the usage of larger ASTC block sizes, reducing bitrate and increasing transcoding speeds. Deblocking is a standard feature of modern image and video codecs, and there's no reason why it can't be used while sampling (or transcoding) GPU textures. Using larger ASTC block sizes can significantly reduce GPU memory bandwidth. If bandwidth is the bottleneck — as it often is — the modest ALU and texture sampling cost of deblocking can be effectively free.
 
 XUASTC LDR's transcoder supports adaptive deblocking when transcoding to other (non-ASTC) formats like BC7, and GPU shader deblocking can be used for ASTC, resulting in a complete deblocking system for ASTC.
 
@@ -512,7 +520,7 @@ KTX2 Support Status
 
 Note as of March 2026 we are working with Khronos on the exact details of how we embed XUASTC LDR supercompressed texture data into the KTX2 file format. KTX2 texture files using our previous codecs (including the recently added UASTC HDR 4x4 and UASTC HDR 6x6i formats) can now be interchanged with other KTX2 tools. See our [KTX2 technical information document](https://github.com/BinomialLLC/basis_universal/wiki/KTX2-File-Format-Support-Technical-Details) for more info.
 
-Whenever possible, we keep full introspection/transcode compatibility with all of our previously written KTX2 files, even if during standardization a file format change is made. We don't expect how we embed XUASTC LDR into KTX2 in basisu v2.1 to change.
+Whenever possible, we keep full introspection/transcode compatibility with all of our previously written KTX2 files, even if during standardization a file format change is made. We don't expect how we embed XUASTC LDR into KTX2 in basisu v2.1/v2.5 to change.
 
 ----
 
